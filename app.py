@@ -1,13 +1,22 @@
 # app.py
 from flask import Flask, request, jsonify
 from validator import validate_login
+from flask_cors import CORS
+from flask.logging import create_logger
+import sqlite3
+import uuid
+#import UserInfo from './userinfo'
 
 app = Flask(__name__)
+create_logger(app)
 
 @app.route('/login/', methods=['POST'])
 def login():
+    if not request.form:
+        app.logger.error(f"could not parse a request: {request.data}")
     username = request.form.get("username", None)
     password = request.form.get("password", None)
+    app.logger.warning(f"received username {username}, password {password}, entirepayload {request.form}")
     valid_cred, error = validate_login(username, password)
     response = {}
     if valid_cred:
@@ -41,12 +50,12 @@ def respond():
 
 @app.route('/post/', methods=['POST'])
 def post_something():
-    param = request.form.get('name')
+    param = request.form.get('name', None)
     print(param)
     # You can add the test cases you made in the previous function, but in our case here you are just testing the POST functionality
     if param:
         return jsonify({
-            "Message": f"Welcome {name} to our awesome platform!!",
+            "Message": f"Welcome {param} to our awesome platform!!",
             # Add this option to distinct the POST request
             "METHOD" : "POST"
         })
@@ -54,6 +63,20 @@ def post_something():
         return jsonify({
             "ERROR": "no name found, please send a name."
         })
+
+@app.route('/get/', methods=['GET'])
+def generate_session_id():
+    session_id = str(uuid.uuid4())
+    param = request.form.get('username')
+    return session_id
+
+@app.route('/post/', methods=['POST'])
+def post_restaurants():
+    return
+
+@app.route('/get/', methods=['GET'])
+def get_restaurants():
+    return
 
 # A welcome message to test our server
 @app.route('/')
