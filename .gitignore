@@ -1,3 +1,5 @@
+# local envvar setup
+run.sh
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,flask,macos
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,flask,macos

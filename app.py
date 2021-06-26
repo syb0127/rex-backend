@@ -1,23 +1,24 @@
 # app.py
-from flask import Flask, request, jsonify
-from validator import validate_login
-from flask_cors import CORS
-from flask.logging import create_logger
 import sqlite3
 import uuid
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import validator
+import recommendor
+import login
 #import UserInfo from './userinfo'
 
 app = Flask(__name__)
-create_logger(app)
+CORS(app)
 
 @app.route('/login/', methods=['POST'])
-def login():
-    if not request.form:
-        app.logger.error(f"could not parse a request: {request.data}")
+def log_in():
     username = request.form.get("username", None)
     password = request.form.get("password", None)
+    if not request.form:
+        app.logger.warning(f"Welcome back, {username}!")
     app.logger.warning(f"received username {username}, password {password}, entirepayload {request.form}")
-    valid_cred, error = validate_login(username, password)
+    valid_cred, error = validator.validate_login(username, password)
     response = {}
     if valid_cred:
         response["MESSAGE"] = f"Welcome {username} to our app!"
@@ -26,58 +27,33 @@ def login():
     #
     return jsonify(response)
 
-@app.route('/getmsg/', methods=['GET'])
-def respond():
-    # Retrieve the name from url parameter
-    name = request.args.get("name", None)
-
-    # For debugging
-    print(f"got name {name}")
-
+@app.route('/signup/', methods=['POST'])
+def signin():
+    username = request.form.get("username", None)
+    password = request.form.get("password", None)
+    app.logger.warning(f"received username {username}, password {password}, entirepayload {request.form}")
+    valid_cred, error = validator.validate_login(username, password)
     response = {}
-
-    # Check if user sent a name at all
-    if not name:
-        response["ERROR"] = "no name found, please send a name."
-    # Check if the user entered a number not a name
-    elif str(name).isdigit():
-        response["ERROR"] = "name can't be numeric."
-    # Now the user entered a valid name
+    if valid_cred:
+        login.create_user()
+        response["MESSAGE"] = f"Welcome " #여기에 user id printing
     else:
-        response["MESSAGE"] = f"Welcome {name} to our awesome platform!!"
-
-    # Return the response in json format
+        response["ERROR"] = error[0]
+    #
     return jsonify(response)
 
-@app.route('/post/', methods=['POST'])
-def post_something():
-    param = request.form.get('name', None)
-    print(param)
-    # You can add the test cases you made in the previous function, but in our case here you are just testing the POST functionality
-    if param:
-        return jsonify({
-            "Message": f"Welcome {param} to our awesome platform!!",
-            # Add this option to distinct the POST request
-            "METHOD" : "POST"
-        })
-    else:
-        return jsonify({
-            "ERROR": "no name found, please send a name."
-        })
-
-@app.route('/get/', methods=['GET'])
+'''@app.route('/get/', methods=['GET'])
 def generate_session_id():
     session_id = str(uuid.uuid4())
     param = request.form.get('username')
-    return session_id
+    return session_id'''
 
-@app.route('/post/', methods=['POST'])
-def post_restaurants():
-    return
-
-@app.route('/get/', methods=['GET'])
+@app.route('/restaurants/', methods=['GET'])
 def get_restaurants():
-    return
+    lat = request.args.get("lat")
+    lon = request.args.get("lon")
+    restaurants = recommendor.get_recommended_restaurants(lat, lon)
+    return restaurants
 
 # A welcome message to test our server
 @app.route('/')

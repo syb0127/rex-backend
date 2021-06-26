@@ -15,4 +15,4 @@ VALUES
 GO
 
 SELECT * FROM UserInfo
-GO
+GO 
