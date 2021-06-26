@@ -1,13 +1,16 @@
 import googleapi
-#import something from './dbquery.py'
 
 def get_recommended_restaurants(lat,lon):
     search_result = googleapi.get_nearby_restaurants(lat,lon)
-    cleaned_search_result = cleanup_results(search_result)
-    return cleaned_search_result
+    return search_result
 
-def cleanup_results(search_result):
-    return [format_restaurant_entry(r) for r in search_result]
+def adjust_personal_restaurant_rating(place_id, personal_rating):
+    #return boolean
+    #return false if dbquery fails or if personal_rating is invalid
+    rating = dbquery.()
+    if (rating is None):
+        rating = 5
+    calculate the updated_rating
+    send the (user_id, place_id, updated rating) to the db
 
-def format_restaurant_entry(restaurant):
-    return {'name': restaurant['name'], 'opening hours': restaurant['opening hours'], 'photos': restaurant['photos'], 'rating': restaurant['rating'], 'vicinity': restaurant['vicinity'], 'types': restaurant['types']} 
+    return True

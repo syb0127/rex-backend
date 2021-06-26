@@ -84,5 +84,8 @@ def insert_new_user(username, pwd_salted_hash, email):
         print(f"Failed to insert the row (username {username}, salted_password {pwd_salted_hash}, email {email}) into `user` table: {e}")
         return None
 
+
+
+
 def get_unliked_rest(username):
     return 1
