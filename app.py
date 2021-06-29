@@ -7,7 +7,6 @@ from flask_cors import CORS
 import validator
 import recommendor
 import login
-#import UserInfo from './userinfo'
 
 app = Flask(__name__)
 CORS(app)
@@ -22,12 +21,18 @@ def log_in():
     logger.warning(f"received username {username}, password {password}, entirepayload {request.form}")
     valid_cred, error = validator.validate_login(username, password)
     response = {}
+    status_code = 200
     if valid_cred:
-        response["MESSAGE"] = f"Welcome back, {username}!"
+        session_token = login.get_session_token(username, password)
+        if session_token is None:
+            response["error"] = f"Given username and password do not exist."
+            status_code = 403
+        else:
+            response["session_token"] = session_token
     else:
-        response["ERROR"] = error[0]
-    #
-    return jsonify(response)
+        response["error"] = error[0]
+        status_code = 403
+    return response, status_code
 
 @app.route('/signup/', methods=['POST'])
 def signup():
@@ -39,31 +44,33 @@ def signup():
     response = {}
     if valid_cred:
         login.create_user(username, password, email)
-        response["MESSAGE"] = f"Welcome {username} to our app!" #여기에 user id printing
+        response["message"] = f"Welcome {username} to our app!" 
     else:
-        response["ERROR"] = error[0]
-    #
+        response["error"] = error[0]
     return jsonify(response)
-
-'''@app.route('/get/', methods=['GET'])
-def generate_session_id():
-    session_id = str(uuid.uuid4())
-    param = request.form.get('username')
-    return session_id'''
 
 @app.route('/restaurant/', methods=['GET'])
 def get_restaurants():
     lat = request.args.get("lat")
     lon = request.args.get("lon")
+    logger.warning(f"lat {lat}, lon {lon}")
     restaurants = recommendor.get_recommended_restaurants(lat, lon)
-    return restaurants
+    return {"results": restaurants}
 
 @app.route('/restaurant/feedback/', methods=['POST'])
 def save_restaurant_feedback():
+    session_token = request.headers.get("session_token")
     place_id = request.form.get("place_id")
     feedback = request.form.get("feedback")
-    successfully_updated = recommendor.adjust_personal_restaurant_rating(place_id, feedback)
-    return successfully_updated
+    if session_token is None or not session_token:
+        return {'error': "Did not receive `session_token`"}, 400
+    user_id = login.get_user_id_by_session_token(session_token)
+    if user_id is None:
+        return {'error': "Session does not exist."}, 403
+    successfully_updated = recommendor.adjust_personal_restaurant_rating(user_id, place_id, feedback)
+    if not successfully_updated:
+        return {'error': "Failed to update rating"}, 500
+    return {'message': "Success"}, 200
 
 # A welcome message to test our server
 @app.route('/')

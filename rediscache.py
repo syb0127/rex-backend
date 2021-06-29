@@ -13,4 +13,8 @@ def get_session_token(user_id):
     return token
 
 def set_session_token(user_id, session_token):
-    return r.set(user_id, session_token, ex=600) 
+    return r.set(session_token, user_id, ex=600) 
+
+def get_user_id_by_session_token(session_token):
+    user_id = r.get(session_token)
+    return user_id
